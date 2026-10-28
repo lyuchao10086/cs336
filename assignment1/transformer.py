@@ -39,39 +39,39 @@ class TransformerBlock(nn.Module):
         x = x + self.ffn(self.norm2(x))
         return x
 
-    class TranformerLM(nn.Module):
-        def __init__(
-            self,
-            vocab_size: int,
-            context_length: int,
-            d_model: int,
-            num_layers: int,
-            num_heads: int,
-            d_ff: int,
-            theta: float,
-            device: torch.device | None = None,
-            dtype: torch.dtype | None = None,
-        ):
-            super().__init__()
-            self.embedding = Embedding(vocab_size, d_model, device=device, dtype=dtype)
-            self.blocks = nn.ModuleList(
-                TransformerBlock(
-                    d_model,
-                    num_heads,
-                    d_ff,
-                    context_length,
-                    theta,
-                    device=device,
-                    dtype=dtype,
-                )
-                for _ in range(num_layers)
+class TranformerLM(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        context_length: int,
+        d_model: int,
+        num_layers: int,
+        num_heads: int,
+        d_ff: int,
+        theta: float,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
+    ):
+        super().__init__()
+        self.embedding = Embedding(vocab_size, d_model, device=device, dtype=dtype)
+        self.blocks = nn.ModuleList(
+            TransformerBlock(
+                d_model,
+                num_heads,
+                d_ff,
+                context_length,
+                theta,
+                device=device,
+                dtype=dtype,
             )
-            self.norm = RMSNorm(d_model, device=device, dtype=dtype)
-            self.linear = Linear(d_model, vocab_size, device=device, dtype=dtype)
+            for _ in range(num_layers)
+        )
+        self.norm = RMSNorm(d_model, device=device, dtype=dtype)
+        self.linear = Linear(d_model, vocab_size, device=device, dtype=dtype)
 
-        def forward(self, token_ids: torch.Tensor | None = None) -> torch.Tensor:
-            x = self.embedding(token_ids)
-            for block in self.blocks:
-                x = block(x)
-            x = self.linear(self.norm(x))
-            return x
+    def forward(self, token_ids: torch.Tensor | None = None) -> torch.Tensor:
+        x = self.embedding(token_ids)
+        for block in self.blocks:
+            x = block(x)
+        x = self.linear(self.norm(x))
+        return x
